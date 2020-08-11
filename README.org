@@ -3,5 +3,6 @@
 * 2018
 * 2016
 * 2015
+- <2015-08-11 Tue> [[file:posts/socket-io-some-useful-funcs.org][Socket.io 中一些有用的方法]]
 - <2015-08-11 Tue> [[file:posts/redis-func.org][Redis 几个常用的简单命令]]
 - <2015-08-11 Tue> [[file:posts/hello-world.org][Hello Hexo]]
