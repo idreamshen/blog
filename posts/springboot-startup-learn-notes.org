@@ -1,0 +1,377 @@
+#+title: SpringBoot 启动分析笔记
+#+date: <2020-08-10 Mon>
+
+* 代码流程
+*** SpringApplication.run()
+#+BEGIN_SRC java
+  public static ConfigurableApplicationContext run(Object source, String... args) {
+      return run(new Object[] { source }, args);
+  }
+
+  public static ConfigurableApplicationContext run(Object[] sources, String[] args) {
+      // 先实例化 SpringApplication
+      return new SpringApplication(sources)
+          // 再执行 run 方法
+          .run(args);
+  }
+#+END_SRC
+
+*** SpringApplication 实例化
+#+BEGIN_SRC java
+  public SpringApplication(Object... sources) {
+      initialize(sources);
+  }
+
+  private void initialize(Object[] sources) {
+      this.sources.addAll(Arrays.asList(sources));
+
+      /*
+       ,* 推断是否是 web 环境
+       ,* 满足 web 环境的条件是必须同时存在以下的类
+       ,* 1. javax.servlet.Servlet
+       ,* 2. org.springframework.web.context.ConfigurableWebApplicationContext
+       ,*/
+      this.webEnvironment = deduceWebEnvironment();
+
+      /*
+       ,* 1. 实例化 org.springframework.context.ApplicationContextInitializer 配置对应类
+       ,* 2. 将这些类赋值至成员变量 initializers 中
+       ,*/
+      setInitializers((Collection) getSpringFactoriesInstances(ApplicationContextInitializer.class));
+
+      /*
+       ,* 1. 实例化 org.springframework.context.ApplicationListener 配置对应类
+       ,* 2. 将这些类赋值至成员变量 initializers 中
+       ,*/
+      setListeners((Collection) getSrpingFactoriesInstances(ApplicationListener.class));
+
+      // 找到 main 函数对应的 Class
+      this.mainApplicationClass = deduceMainApplicationClass();
+  }
+
+  private <T> Collection<? extends T> getSpringFactoriesInstances(Class<T> type) {
+      return getSpringFactoriesInstances(type, new Class<?>[] {});
+  }
+
+  private <T> Collection<? extends T> getSrpingFactoriesInstances(Class<T> type,
+                                                                  Class<?>[] parameterTypes,
+                                                                  Object... args) {
+      /*
+       ,* 从 META-INF/spring.factories 中找到 key 为 type 的配置
+       ,* 在此处，就是获取以下配置
+       ,* 1. org.springframework.context.ApplicationContextInitializer
+       ,* 2. org.springframework.context.ApplicationListener
+       ,*/
+      Set<String> names = new LinkedHashSet<>(SpringFactoriesLoader.loadFactoryNames(type, classLoader));
+
+      // 将 names 进行实例化
+      List<T> instances = createSpringFactoriesInstances(type, parameterTypes, classLoader, args, names);
+
+      // 基于 Order 排序
+      AnnotationAwareOrderComparator.sort(instances);
+
+      return instances;
+  }
+
+#+END_SRC
+
+*** SpringApplication 实例方法 run
+#+BEGIN_SRC java
+  public ConfigurableApplicationContext run(String... args) {
+
+      /*
+       ,* 将 org.springframework.boot.SpringApplicationRunListener 对应的实现类
+       ,* 都装载至 SpringApplicationRunListeners
+       ,*/
+      SpringApplicationRunListeners listeners = getRunListeners(args);
+
+      // 触发所有 listener 的 started 方法
+      listeners.started();
+
+      // 将命令行参数 args 包装成 ApplicationArguments，方便取值
+      ApplicationArguments applicationArguments = new DefaultApplicationArguments(args);
+
+      /*
+       ,* 1. 创建 ConfigurableEnvironment
+       ,* 2. 设置 environment
+       ,*    1. 设置 PropertySources，一般 args 为空，故没有做特殊配置
+       ,*    2. 设置 ActiveProfile，从命令行的 spring.profiles.active 中读取
+       ,* 3. 触发所有 listener 的 environmentPrepared 方法
+       ,*/
+      ConfigurableEnvironment environment = prepareEnvironment(listeners, applicationArguments);
+
+      /*
+       ,* 创建 ApplicationContext 应用上下文
+       ,*
+       ,* 非 Web 环境使用 org.springframework.context.annotation.
+       ,* AnnotationConfigApplicationContext 创建
+       ,*
+       ,* Web 环境使用 org.springframework.boot.context.embedded.
+       ,* AnnotationConfigEmbeddedWebApplicationContext 创建
+       ,*/
+      ConfigurableApplicationContext context = createApplicationContext();
+
+      // 准备上下文
+      prepareContext(context, environment, listeners, applicationArguments, printedBanner);
+
+      // 刷新上下文
+      refreshContext(context);
+
+      // 刷新上下文后置处理
+      afterRefresh(context, applicationArguments);
+
+      // 触发所有 listener 的 finished 方法
+      listeners.finished(context, null);
+
+      return context;
+  }
+#+END_SRC
+
+*** SpringApplication 实例方法 prepareContext
+#+BEGIN_SRC java
+  private void prepareContext(ConfigurableApplicationContext context,
+                              ConfigurableEnvironment environment,
+                              SpringApplicationRunListeners listeners,
+                              ApplicationArguments applicationArguments) {
+
+      // 将 environment 环境信息注入至 context 上下文中
+      context.setEnvironment(environment);
+
+      /*
+       ,* 由于 this.beanNameGenerator 和 this.resourceLoader 默认为 null
+       ,* 所以没做任何处理
+       ,*/
+      postProcessApplicationContext(context);
+
+      // 触发所有 this.intializers 实现类的 intialize 方法
+      applyInitializers(context);
+
+      // 触发所有 listener 方法 contextPrepared 执行
+      listeners.contextPrepared(context);
+
+      // 这里可以简单的认为 sources 存储了启动的主类
+      Set<Object> sources = getSources();
+
+      /*
+       ,* 进行 bean 实例化，并加载到 context 上下文中
+       ,* 具体逻辑查看下方的 load 方法
+       ,*/
+      load(context, sources.toArray(new Object[sources.size()]));
+
+      // 触发所有 listener 方法 contextLoaded 执行
+      listeners.contextLoaded(context);
+  }
+
+  protected void load(Application context, Object[] sources) {
+
+      // 获取 registry。context 是 BeanDefinitionRegistry 的实现类，所以直接转化即可
+      BeanDefinitionRegistry registry = getBeanDefinitionRegistry(context);
+
+      /*
+       ,* 使用 new BeanDefinitionLoader(registry, sources) 构造
+       ,*/
+      BeanDefinitionLoader loader = createBeanDefinitionLoader(registry, sources);
+
+      // 给 loader 注入环境信息
+      loader.setEnvironment(this.environment);
+
+      // 将主类的 BeanDefinition 注册至 BeanDefinitionRegistry 中
+      loader.load();
+  }
+#+END_SRC
+
+*** SpringApplication 实例方法 refreshContext
+#+BEGIN_SRC java
+  private void refreshContext(ConfigurableApplicationContext context) {
+      refresh(context);
+
+      // shutdownhook
+      // ...
+  }
+
+  protected void refresh(ApplicationContext applicationContext) {
+      // 调用 applicationContext 的 refresh 方法
+      ((AbstractApplicationContext) applicationContext).refresh();
+  }
+
+  /**
+   ,* AbstractApplicationContext.refresh()
+   ,*/
+  public void refresh() {
+
+      /*
+       ,* refresh 前准备工作
+       ,* 设置程序启动时间、active 标记等
+       ,*/
+      prepareRefresh();
+
+      // 获取 DefaultListableBeanFactory 这个 BeanFactory
+      ConfigurableListableBeanFactory beanFactory = obtainFreshBeanFactory();
+
+      prepareBeanFactory(beanFactory);
+
+      try {
+          postProcessBeanFactory(beanFactory);
+
+          invokeBeanFactoryPostProcessors(beanFactory);
+
+          registerBeanPostProcessors(beanFactory);
+
+          initMessageSource();
+
+          initApplicationEventMulticaster();
+
+          onRefresh();
+
+          registerListeners();
+
+          finishBeanFactoryInitialization(beanFactory);
+
+          finishRefresh();
+      }
+      // catch
+      // finally
+
+  }
+#+END_SRC
+
+**** AbstractApplicationContext 实例方法 prepareBeanFactory
+#+BEGIN_SRC java
+  protected void prepareBeanFactory(ConfigurableListableBeanFactory beanFactory) {
+      // Tell the internal bean factory to use the context's class loader etc.
+      beanFactory.setBeanClassLoader(getClassLoader());
+      beanFactory.setBeanExpressionResolver(new StandardBeanExpressionResolver(beanFactory.getBeanClassLoader()));
+
+      // Configure the bean factory with context callbacks.
+      beanFactory.addBeanPostProcessor(new ApplicationContextAwareProcessor(this));
+      beanFactory.ignoreDependencyInterface(EnvironmentAware.class);
+      beanFactory.ignoreDependencyInterface(EmbeddedValueResolverAware.class);
+      beanFactory.ignoreDependencyInterface(ResourceLoaderAware.class);
+      beanFactory.ignoreDependencyInterface(ApplicationEventPublisherAware.class);
+      beanFactory.ignoreDependencyInterface(MessageSourceAware.class);
+      beanFactory.ignoreDependencyInterface(ApplicationContextAware.class);
+
+      // BeanFactory interface not registered as resolvable type in a plain factory.
+      // MessageSource registered (and found for autowiring) as a bean.
+      beanFactory.registerResolvableDependency(BeanFactory.class, beanFactory);
+      beanFactory.registerResolvableDependency(ResourceLoader.class, this);
+      beanFactory.registerResolvableDependency(ApplicationEventPublisher.class, this);
+      beanFactory.registerResolvableDependency(ApplicationContext.class, this);
+
+      // Register early post-processor for detecting inner beans as ApplicationListeners.
+      beanFactory.addBeanPostProcessor(new ApplicationListenerDetector(this));
+
+      beanFactory.registerSingleton("environment", getEnvironment());
+      beanFactory.registerSingleton("systemProperties", getEnvironment().getSystemProperties());
+      beanFactory.registerSingleton("systemEnvironment", getEnvironment().getSystemEnvironment());
+  }
+#+END_SRC
+
+**** AbstractApplicationContext 实例方法 postProcessBeanFactory
+#+BEGIN_SRC java
+  // 默认空逻辑
+#+END_SRC
+
+**** AbstractApplicationContext 实例方法 invokeBeanFactoryPostProcessors
+#+BEGIN_SRC java
+  protected void invokeBeanFactoryPostProcessors(ConfigurableListableBeanFactory beanFactory) {
+      PostProcessorRegistrationDelegate.invokeBeanFactoryPostProcessors(beanFactory, getBeanFactoryPostProcessors());
+  }
+#+END_SRC
+
+**** AbstractApplicationContext 实例方法 registerBeanPostProcessors
+
+**** AbstractApplicationContext 实例方法 initMessageSource
+
+**** AbstractApplicationContext 实例方法 initApplicationEventMulticaster
+
+**** AbstractApplicationContext 实例方法 onRefresh
+
+**** AbstractApplicationContext 实例方法 registerListeners
+
+**** AbstractApplicationContext 实例方法 finishBeanFactoryInitialization
+
+**** AbstractApplicationContext 实例方法 finishRefresh
+
+
+* 时序图
+#+BEGIN_SRC plantuml :file images/springboot-sequence-diagram.png :exports result
+autonumber
+"SpringApplication.run()" as SpringApplicationRun -> SpringApplication: new SpringApplication(sources) 实例化
+activate SpringApplication
+SpringApplication -> SpringApplication: deduceWebEnvironment 检测是否是 Web 环境
+SpringApplication -> SpringApplication: setInitializers 设置 ApplicationContextInitializer
+SpringApplication -> SpringApplication: setListeners 设置 ApplicationListener
+SpringApplication -> SpringApplication: deduceMainApplicationClass() 检测主函数
+SpringApplicationRun <- SpringApplication: SpringApplication
+deactivate SpringApplication
+
+SpringApplicationRun -> SpringApplication: run(args)
+activate SpringApplication
+
+
+create SpringApplicationRunListeners
+SpringApplication -> SpringApplicationRunListeners: getRunListeners 获取所有 SpringApplicationRunListener
+group start 开始
+SpringApplication -> SpringApplicationRunListeners: 触发事件 started
+end
+
+group prepareEnvironment 准备环境
+SpringApplication -> SpringApplication: createEnvironment 创建环境
+SpringApplication -> SpringApplication: configureEnvironment 配置环境
+SpringApplication -> SpringApplicationRunListeners: 触发事件 environmentPrepared
+end
+
+group createApplicationContext 创建上下文
+create ConfigurableApplicationContext
+SpringApplication -> ConfigurableApplicationContext: createApplicationContext 创建上下文
+end
+
+group prepareApplicationContext 准备上下文
+SpringApplication -> SpringApplication: postProcessApplicationContext
+SpringApplication -> SpringApplication: applyInitializers 执行 ApplicationContextInitializer.initialize 方法
+SpringApplication -> SpringApplicationRunListeners: 触发事件 contextPrepared
+end
+
+group loadApplicationContext 加载上下文
+create BeanDefinitionLoader
+SpringApplication -> BeanDefinitionLoader: load 加载 Bean
+create AnnotatedBeanDefinitionReader
+BeanDefinitionLoader -> AnnotatedBeanDefinitionReader: registerBean 注册Bean，此时注册的就是 Main Class
+SpringApplication -> SpringApplicationRunListeners: 触发事件 contextLoaded
+end
+
+group refreshApplicationContext 刷新上下文
+SpringApplication -> ConfigurableApplicationContext: refresh
+activate ConfigurableApplicationContext
+ConfigurableApplicationContext -> ConfigurableApplicationContext: prepareRefresh 设置启动时间、设置激活标记位等
+ConfigurableApplicationContext -> ConfigurableApplicationContext: obtainFreshBeanFactory 获取 Bean 工厂
+ConfigurableApplicationContext -> ConfigurableApplicationContext: prepareBeanFactory 准备工厂
+ConfigurableApplicationContext -> ConfigurableApplicationContext: postProcessBeanFactory
+ConfigurableApplicationContext -> ConfigurableApplicationContext: invokeBeanFactoryPostProcessors 触发所有的 BeanFactoryPostProcessor
+ConfigurableApplicationContext -> ConfigurableApplicationContext: registerBeanPostProcessors 触发所有的 BeanPostProcessor
+ConfigurableApplicationContext -> ConfigurableApplicationContext: initMessageSource 实例化 MessageSource
+ConfigurableApplicationContext -> ConfigurableApplicationContext: initApplicationEventMulticaster 实例化 ApplicationEventMulticaster。默认使用 SimpleApplicationEventMulticaster
+ConfigurableApplicationContext -> ConfigurableApplicationContext: onRefresh
+ConfigurableApplicationContext -> ConfigurableApplicationContext: registerListeners 注册 ApplicationListener 的实现类
+ConfigurableApplicationContext -> ConfigurableApplicationContext: finishBeanFactoryInitialization 实例化非懒加载的单例
+ConfigurableApplicationContext -> ConfigurableApplicationContext: finishRefresh 初始化 LifeCycleProcessor\n触发 LifecycleProcessor.onRefresh() 方法\n发布 ContextRefreshedEvent 事件
+ConfigurableApplicationContext --> SpringApplication
+deactivate ConfigurableApplicationContext
+end
+
+group afterRefreshedApplicationContext 刷新上下文
+SpringApplication -> SpringApplication: afterRefresh
+SpringApplication -> SpringApplicationRunListeners: finished
+end
+
+SpringApplicationRun <- SpringApplication: ConfigurableApplicationContext
+deactivate SpringApplication
+#+END_SRC
+
+#+RESULTS:
+[[file:images/springboot-sequence-diagram.png]]
+
+* 参考资料
+- [[https://www.cnblogs.com/java-chen-hao/p/11829056.html][SpringBoot 源码解析 （一）----- SpringBoot核心原理入门]]
+
