@@ -1,0 +1,13 @@
+#+title: 使用 GIT 克隆指定 TAG 或分支
+#+date: <2018-04-14 Sat>
+
+* 命令
+#+BEGIN_SRC
+git clone -b 'v2.0' --single-branch --depth 1 https://github.com/git/git.git
+#+END_SRC
+- v2.0 代指 branch 或 tag
+- depth 表示 clone 深度，如果待克隆的项目很大，同时您不关注代码的变更历史，那可以使用 depth=1 提高 clone 速度
+
+* 参考资料
+- [[https://stackoverflow.com/questions/791959/download-a-specific-tag-with-git?utm_medium%3Dorganic&utm_source%3Dgoogle_rich_qa&utm_campaign%3Dgoogle_rich_qa][Download a specific tag with Git]]
+
