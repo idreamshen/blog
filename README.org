@@ -1,6 +1,7 @@
 * 2020
 * 2019
 * 2018
+- <2020-12-03 Thu> [[file:posts/wechat-broadcast-message-fake-picture.org][伪造微信群发助手截图]]
 - <2018-11-05 Mon> [[file:posts/fix-chrome-console-font-size.org][修复 Chrome 控制台字体大小]]
 - <2018-04-20 Fri> [[file:posts/how-to-watch-netflix.org][如何观看 Netflix]]
 - <2018-04-14 Sat> [[file:posts/git-clone-specific-tag-or-branch.org][使用 GIT 克隆指定 TAG 或分支]]
