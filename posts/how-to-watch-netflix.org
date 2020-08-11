@@ -1,0 +1,16 @@
+#+title: 如何观看 Netflix
+#+date: <2018-04-20 Fri>
+
+前段时间用某云的 HK 节点自建梯子观看 Netflix 很流畅，但是最近发现 HK 节点已无法正常观看。更换了该云上的 IP 后依然无法正常观看。
+
+经过一番折腾，找到了一家不错的梯子，可以顺利观看 Netflix，下面就简要介绍一番。
+
+1. 服务商为 [[https://hkssnetwork.net/]]
+2. 注册 hkss 账号
+3. 充值 11 元
+4. 购买最低配的 50G 流量套餐
+5. 在 iPad 上使用梯子连接新的服务器
+
+[[file:images/netflix.jpg]]
+
+由于 Netflix 无法截图播放界面，但是实测播放相当流畅，hava fun
