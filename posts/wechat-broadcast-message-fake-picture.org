@@ -24,9 +24,9 @@
 * 效果
 最后来看一下对比图：
 
-[[file:/images/wechat-broadcast-message-original.jpeg]]
+[[file:images/wechat-broadcast-message-original.jpeg]]
 
-[[file:/images/wechat-broadcast-message-fake.jpeg]]
+[[file:images/wechat-broadcast-message-fake.jpeg]]
 
 注意，上面伪造图中数字字体是有问题的，细看是能发现字体不对的。但是就本需求实际来说，已经达到交付效果了。
 
