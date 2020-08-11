@@ -1,5 +1,11 @@
 * 2020
+- <2028-07-20 Thu> [[file:posts/how-to-switch-primary-monitor-on-mac.org][Mac系统中如何修改主显示屏]]
 * 2019
+- <2019-08-22 Thu> [[file:posts/badminton.org][羽毛球]]
+- <2019-05-31 Fri> [[file:posts/emacs-beginner.org][Emacs 入门]]
+- <2019-05-24 Fri> [[file:posts/apologize.org][复盘]]
+- <2019-02-02 Sat> [[file:posts/2018-review.org][回首 2018]]
+- <2019-01-03 Thu> [[file:posts/one-password-hotkey.org][1Password 快捷键]]
 * 2018
 - <2020-12-03 Thu> [[file:posts/wechat-broadcast-message-fake-picture.org][伪造微信群发助手截图]]
 - <2018-11-05 Mon> [[file:posts/fix-chrome-console-font-size.org][修复 Chrome 控制台字体大小]]
