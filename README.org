@@ -3,4 +3,5 @@
 * 2018
 * 2016
 * 2015
-- <2015-08-11 Tue> [[file:posts/hello-world.md]]
+- <2015-08-11 Tue> [[file:posts/redis-func.md][Redis 几个常用的简单命令]]
+- <2015-08-11 Tue> [[file:posts/hello-world.org][Hello Hexo]]
