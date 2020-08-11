@@ -295,7 +295,7 @@
 
 
 * 时序图
-#+BEGIN_SRC plantuml :file images/springboot-sequence-diagram.png :exports result
+#+BEGIN_SRC plantuml :file images/springboot-sequence-diagram.png :exports results
 autonumber
 "SpringApplication.run()" as SpringApplicationRun -> SpringApplication: new SpringApplication(sources) 实例化
 activate SpringApplication
