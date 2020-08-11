@@ -19,7 +19,7 @@
 1. 关闭飞行模式
 
 *** 效果
-[[file:/images/apple-news.jpg][News App in iPad]]
+[[file:images/apple-news.jpg][News App in iPad]]
 
 *** 备注
 - 上述飞行模式的切换不是必须的，但是切换飞行模式后能提高成功率
