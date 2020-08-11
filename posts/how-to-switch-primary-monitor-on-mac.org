@@ -8,7 +8,7 @@
 1. 打开“系统偏好设置”
 2. 点击“显示器”
 3. 点击“排列”，如下图。注意图中的红框内的白条，这个白条是可以拖动的
-[[file:images/change-primary-monitor-1.jpg][图1]]
+[[file:images/change-primary-monitor-1.jpg]]
 
 4. 拖动白条，将其移动到另一块“显示屏”上，即可完成主显示器的切换
 [[file:images/change-primary-monitor-2.jpg]]
