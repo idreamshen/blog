@@ -1,0 +1,21 @@
+#+title: 修复 Chrome 控制台字体大小
+#+date: <2018-11-05 Mon>
+
+最近在调试 Web 应用时发现 Chrome 的控制台字体非常大，相当影响调试体验。在 Chrome 中调整了一遍字体相关的配置，仍然无效。
+
+下图就是字体很大的情况：
+
+[[file:images/chrome-console-font-size-large.png]]
+
+后来终于找到解决方案，原来可以通过快捷键调整字体大小。具体的操作步骤如下：
+
+1. 打开 Chrome Console 界面
+2. 使用鼠标激活 Console 界面，即保持当前焦点位于 Console 上
+3. 使用 Command +/- 快捷键来放大或缩小字体，使用 Command 0 则是重置字体大小。（如果是 Windows 系统，则请使用 Control 键）
+
+[[file:images/chrome-console-font-size-small.png]]
+
+参考资料
+
+- https://stackoverflow.com/questions/7613546/increase-font-size-chrome-console
+
