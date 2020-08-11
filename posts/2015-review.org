@@ -14,7 +14,7 @@ Nodejs 是我这一年里使用次数最多的语言,我用它完成了若干个
 
 我举2个实例来看一下 Nodejs 和 Java 在编程上有什么区别.
 
-* 假设需求:通过一个网页向用户展示某件商品的相关信息.
+* 通过一个网页向用户展示某件商品的相关信息
 
 Nodejs 版 (Express Framework)
 #+begin_src js
@@ -74,7 +74,7 @@ public class ItemController {
 
 Nodejs 版中第 11 行至 13 行是从数据库获取信息,通过 Promise 的 all 方法包裹后,三个 sql 语句并行执行,假设 3 条 sql 语句耗时分别为 1ms 1.2ms 0.8ms,那么第 14 行的代码将在 1.2ms 后执行.再看 Java 版,第 15 行至 17 行是串行查询,所以第 19 行会在 1 + 1.2 + 0.8 = 3ms 后执行.这也就是一定程度上, Nodejs 的速度要优于 Java.
 
-* 假设需求:实现一个机器人简单逻辑
+* 实现一个机器人简单逻辑
 
 Nodejs 版
 #+begin_src js
