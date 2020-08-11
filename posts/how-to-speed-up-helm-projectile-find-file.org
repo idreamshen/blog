@@ -1,0 +1,26 @@
+#+title: 如何加快 helm-projectile-find-file 的执行速度
+#+date: <2020-08-04 Tue>
+
+* 背景
+最近在 Emacs 中使用 ~helm-projectile-find-file~ 命令搜索源码文件时，发现卡顿很严重。后寻找资料发现原来是 =helm= 的搜索框内默认使用了 =Fuzzy= 搜索方式，导致搜索时间复杂度上升。
+
+* 解决方案
+只需要在待搜索字符串前输入一个空格即可取消 =Fuzzy= 搜索模式。比如想搜索 =ArrayList.java= ，则需输入 =[space]ArrayList.java= （注意：[space] 表示空格）
+
+查阅以下 Helm 的帮助文档可知当输入空格时，将不启用 =Fuzzy= 模式。
+#+begin_src example
+All that you write in minibuffer is interpreted as a regexp or
+multiple regexps if separated by a space.  This is true for most
+sources unless the developer of the source has disabled it or
+have choosen to use fuzzy matching.  Even if a source has fuzzy
+matching enabled, Helm will switch to multi match as soon as it
+detects a space in the pattern.  It may also switch to multi match
+as well if pattern starts with a "^" beginning of line sign.  In
+those cases each pattern separated with space should be a regexp
+and not a fuzzy pattern.  When using multi match patterns, each
+pattern starting with "!" is interpreted as a negation i.e.
+match everything but this.
+#+end_src
+
+* 参考资料
+- [[https://eklitzke.org/making-helm-projectile-find-file-fast-in-large-projects][Making helm-projectile-find-file Fast In Large Projects]]
