@@ -1,4 +1,5 @@
 * 2020
+- <2020-08-12 Wed> [[file:posts/github-ssh-proxy.org][Github SSH Proxy]]
 - <2020-08-11 Tue> [[file:posts/migrate-to-github.org][博客迁移]]
 - <2020-08-04 Tue> [[file:posts/how-to-speed-up-helm-projectile-find-file.org][如何加快 helm-projectile-find-file 的执行速度]]
 - <2028-07-20 Thu> [[file:posts/how-to-switch-primary-monitor-on-mac.org][Mac系统中如何修改主显示屏]]
